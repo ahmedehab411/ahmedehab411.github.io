@@ -1018,15 +1018,22 @@ function initMobileMenu() {
 function initCustomCursor() {
   const cursor = document.getElementById("cursor");
   const cursorDot = document.getElementById("cursorDot");
-
   if (!cursor || !cursorDot) return;
 
-  document.addEventListener("mousemove", (e) => {
-    cursor.style.left = e.clientX + "px";
-    cursor.style.top = e.clientY + "px";
-    cursorDot.style.left = e.clientX + "px";
-    cursorDot.style.top = e.clientY + "px";
-  });
+  let lastMove = 0;
+  const throttleDelay = 16;
+  document.addEventListener(
+    "mousemove",
+    (e) => {
+      if (Date.now() - lastMove < throttleDelay) return;
+      lastMove = Date.now();
+      cursor.style.left = e.clientX + "px";
+      cursor.style.top = e.clientY + "px";
+      cursorDot.style.left = e.clientX + "px";
+      cursorDot.style.top = e.clientY + "px";
+    },
+    { passive: true }
+  );
 
   const clickables = document.querySelectorAll(
     "a, button, .project-card, .skill-card"
@@ -1468,25 +1475,24 @@ let allProjects = [];
 let currentProjectPage = 0;
 const PROJECTS_PER_PAGE = 3;
 function getProjectImage(project) {
-  // Check if image exists and is not empty
   if (project.image && project.image.trim() !== "") {
-    return project.image;
+    return project.image.replace(/\.jpg$|\.png$/, ".webp");
   }
 
   // Generate contextual placeholder based on category
   const placeholders = {
     robotics:
-      "https://via.placeholder.com/400x300/302B63/4ECDC4?text=Robotics+Project",
-    ai: "https://via.placeholder.com/400x300/302B63/FF6B6B?text=AI+Project",
+      "https://via.placeholder.com/400x300/302B63/4ECDC4.webp?text=Robotics+Project",
+    ai: "https://via.placeholder.com/400x300/302B63/FF6B6B.webp?text=AI+Project",
     embedded:
-      "https://via.placeholder.com/400x300/302B63/FFD700?text=Embedded+Project",
+      "https://via.placeholder.com/400x300/302B63/FFD700.webp?text=Embedded+Project",
     software:
-      "https://via.placeholder.com/400x300/302B63/FFFFFF?text=Software+Project",
+      "https://via.placeholder.com/400x300/302B63/FFFFFF.webp?text=Software+Project",
   };
 
   return (
     placeholders[project.category] ||
-    "https://via.placeholder.com/400x300/302B63/4ECDC4?text=Project"
+    "https://via.placeholder.com/400x300/302B63/4ECDC4.webp?text=Project"
   );
 }
 
@@ -1523,25 +1529,35 @@ function getProjectStatusBadge(status) {
   return badges[status] || "";
 }
 
-async function loadProjects() {
-  try {
-    const res = await fetch("data/projects.json");
-    const projects = res.ok ? await res.json() : getDefaultProjects();
-    displayProjects(projects, "all");
-
-    document.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document
-          .querySelectorAll(".filter-btn")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        displayProjects(projects, btn.dataset.filter);
-      });
-    });
-  } catch (e) {
-    console.error("Error loading projects:", e);
-    displayProjects(getDefaultProjects(), "all");
-  }
+function loadProjects() {
+  const projectsSection = document.getElementById("projects");
+  const observer = new IntersectionObserver(
+    async (entries) => {
+      if (entries[0].isIntersecting) {
+        try {
+          const res = await fetch("data/projects.json");
+          const projects = res.ok ? await res.json() : getDefaultProjects();
+          displayProjects(projects, "all");
+          document.querySelectorAll(".filter-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              document
+                .querySelectorAll(".filter-btn")
+                .forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              displayProjects(projects, btn.dataset.filter);
+            });
+          });
+          observer.unobserve(projectsSection);
+        } catch (e) {
+          console.error("Error loading projects:", e);
+          displayProjects(getDefaultProjects(), "all");
+          observer.unobserve(projectsSection);
+        }
+      }
+    },
+    { threshold: 0.1 }
+  );
+  observer.observe(projectsSection);
 }
 
 function getDefaultProjects() {
@@ -1654,20 +1670,31 @@ function createProjectCard(project, index) {
          </button>`;
 
   card.innerHTML = `
-    <div class="project-image">
-      <img src="${projectImage}" 
-           alt="${project.title}"
-           onerror="this.src='https://via.placeholder.com/400x300/24243e/4ECDC4?text=Project+Image'">
-      ${featuredBadge}
-      ${statusBadge}
-      <div class="project-overlay">
-        ${githubButton}
-      </div>
+  <div class="project-image">
+    <img 
+      src="${projectImage}" 
+      srcset="${projectImage.replace(
+        ".webp",
+        "-300.webp"
+      )} 300w, ${projectImage.replace(
+    ".webp",
+    "-600.webp"
+  )} 600w, ${projectImage} 1200w"
+      sizes="(max-width: 600px) 300px, (max-width: 1200px) 600px, 1200px"
+      alt="${project.title}"
+      loading="lazy"
+      onerror="this.src='https://via.placeholder.com/400x300/24243e/4ECDC4.webp?text=Project+Image'">
+    ${featuredBadge}
+    ${statusBadge}
+    <div class="project-overlay">
+      ${githubButton}
     </div>
-    <div class="project-info">
-      <h3>${project.title}</h3>
-      <p>${project.description}</p> 
-  `;
+  </div>
+  <div class="project-info">
+    <h3>${project.title}</h3>
+    <p>${project.description}</p> 
+  </div>
+`;
 
   return card;
 }
