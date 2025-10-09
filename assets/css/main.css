@@ -1000,6 +1000,12 @@ body {
 }
 
 /* ABOUT SECTION */
+#about .about-grid {
+  max-width: 100vw;
+  overflow: hidden;
+  word-break: break-word;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -1959,12 +1965,10 @@ body {
 }
 
 .testimonial-card-compact .testimonial-text {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  max-height: 160px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .testimonial-card-compact .rating {

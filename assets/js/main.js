@@ -1,6 +1,5 @@
 // ==================== CONFIGURATION ====================
 const CONFIG = {
-  visitorCounterAPI: "https://api.countapi.xyz/hit/ahmedehab-portfolio/visits",
   testimonialAPI: "data/testimonials.json",
   projectsAPI: "data/projects.json",
   skillsAPI: "data/skills.json",
@@ -369,6 +368,8 @@ function openTestimonialForm() {
 // ==================== TESTIMONIALS DATA ====================
 let testimonials = [];
 let currentTestimonial = 0;
+let swipeLocked = false;
+let transitionFired = false;
 
 async function loadTestimonials() {
   try {
@@ -390,15 +391,21 @@ async function loadTestimonials() {
   initTestimonialCarousel();
 }
 
-function updateTestimonialCounts(){
+function updateTestimonialCounts() {
   const count = window.testimonialsCount;
-  const avg   = (testimonials.reduce((s,t)=>s+(t.rating||5),0)/count).toFixed(1);
+  const avg = (
+    testimonials.reduce((s, t) => s + (t.rating || 5), 0) / count
+  ).toFixed(1);
 
   /*  update counters  */
-  document.querySelectorAll('.testimonial-count').forEach(el=>el.textContent=count);
+  document
+    .querySelectorAll(".testimonial-count")
+    .forEach((el) => (el.textContent = count));
 
   /*  update average  */
-  document.querySelectorAll('.average-rating').forEach(el=>el.textContent=avg);
+  document
+    .querySelectorAll(".average-rating")
+    .forEach((el) => (el.textContent = avg));
 }
 
 function getDefaultTestimonials() {
@@ -442,7 +449,8 @@ function initTestimonialCarousel() {
 
   if (!wrapper || !dotsContainer) return;
 
-  const featuredTestimonials = testimonials.filter(t => t.featured) || testimonials.slice(0, 5);
+  const featuredTestimonials =
+    testimonials.filter((t) => t.featured) || testimonials.slice(0, 5);
 
   if (!featuredTestimonials || featuredTestimonials.length === 0) {
     featuredTestimonials = getDefaultTestimonials();
@@ -451,19 +459,26 @@ function initTestimonialCarousel() {
   wrapper.innerHTML = "";
   dotsContainer.innerHTML = "";
 
-  const countElement = document.getElementById('testimonialCount');
+  const countElement = document.getElementById("testimonialCount");
   if (countElement) {
-    countElement.textContent = testimonials.length + '+';
+    countElement.textContent = testimonials.length + "+";
   }
 
   featuredTestimonials.forEach((testimonial, index) => {
     const testimonialCard = document.createElement("div");
-    testimonialCard.className = index === 0 ? "testimonial-card active" : "testimonial-card";
+    testimonialCard.className =
+      index === 0 ? "testimonial-card active" : "testimonial-card";
     testimonialCard.innerHTML = `
       <div class="testimonial-header">
-        <img src="${testimonial.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(testimonial.name)}" 
+        <img src="${
+          testimonial.image ||
+          "https://ui-avatars.com/api/?name=" +
+            encodeURIComponent(testimonial.name)
+        }" 
              alt="${testimonial.name}" 
-             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(testimonial.name)}&background=4ecdc4&color=fff'">
+             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(
+               testimonial.name
+             )}&background=4ecdc4&color=fff'">
         <div class="testimonial-info">
           <h4>${testimonial.name}</h4>
           <p>${testimonial.position} at ${testimonial.company}</p>
@@ -473,21 +488,77 @@ function initTestimonialCarousel() {
         </div>
       </div>
       <p class="testimonial-text">${testimonial.text}</p>
-      <span class="testimonial-date">${formatTestimonialDate(testimonial.date)}</span>
+      <span class="testimonial-date">${formatTestimonialDate(
+        testimonial.date
+      )}</span>
     `;
     wrapper.appendChild(testimonialCard);
 
-    const dot = document.createElement("span");
+    const dot = document.createElement("button");
     dot.className = index === 0 ? "dot active" : "dot";
+    dot.setAttribute("aria-label", `Go to testimonial ${index + 1}`);
     dot.onclick = () => goToTestimonial(index);
+
+    // Add touch support for dots
+    dot.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      goToTestimonial(index);
+    });
+
     dotsContainer.appendChild(dot);
   });
 
   currentTestimonial = 0;
-  window.featuredTestimonials = featuredTestimonials; 
+  window.featuredTestimonials = featuredTestimonials;
 
   if (typeof AOS !== "undefined") {
     AOS.refresh();
+  }
+
+  addSwipeSupport(wrapper);
+}
+
+function addSwipeSupport(element) {
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  element.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    },
+    { passive: true }
+  );
+
+  element.addEventListener(
+    "touchend",
+    (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    },
+    { passive: true }
+  );
+
+  function handleSwipe() {
+    if (swipeLocked) return;
+    const diff = touchEndX - touchStartX;
+    if (Math.abs(diff) < 50) return;
+
+    swipeLocked = true;
+    diff < 0 ? nextTestimonial() : prevTestimonial();
+
+    if (!transitionFired) {
+      const activeCard = element.querySelector(".testimonial-card.active");
+      activeCard?.addEventListener(
+        "transitionend",
+        () => {
+          swipeLocked = false;
+          transitionFired = false;
+        },
+        { once: true }
+      );
+      transitionFired = true;
+    }
   }
 }
 
@@ -534,7 +605,8 @@ function prevTestimonial() {
   cards[currentTestimonial]?.classList.remove("active");
   dots[currentTestimonial]?.classList.remove("active");
 
-  currentTestimonial = (currentTestimonial - 1 + featured.length) % featured.length;
+  currentTestimonial =
+    (currentTestimonial - 1 + featured.length) % featured.length;
 
   cards[currentTestimonial]?.classList.add("active");
   dots[currentTestimonial]?.classList.add("active");
@@ -559,15 +631,19 @@ function goToTestimonial(index) {
 }
 
 function openAllTestimonials() {
-  const modal = document.createElement('div');
-  modal.className = 'all-testimonials-modal active';
-  modal.id = 'allTestimonialsModal';
-  
+  const modal = document.createElement("div");
+  modal.className = "all-testimonials-modal active";
+  modal.id = "allTestimonialsModal";
+
   // Calculate average rating
-  const avgRating = testimonials.length > 0 
-    ? (testimonials.reduce((sum, t) => sum + (t.rating || 5), 0) / testimonials.length).toFixed(1)
-    : '5.0';
-  
+  const avgRating =
+    testimonials.length > 0
+      ? (
+          testimonials.reduce((sum, t) => sum + (t.rating || 5), 0) /
+          testimonials.length
+        ).toFixed(1)
+      : "5.0";
+
   modal.innerHTML = `
     <div class="all-testimonials-content">
       <div class="all-testimonials-header">
@@ -596,47 +672,55 @@ function openAllTestimonials() {
       </div>
       
       <div class="testimonials-grid" id="allTestimonialsGrid">
-        ${testimonials.map(t => createCompactTestimonialCard(t)).join('')}
+        ${testimonials.map((t) => createCompactTestimonialCard(t)).join("")}
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(modal);
-  document.body.style.overflow = 'hidden';
-  
+  document.body.style.overflow = "hidden";
+
   // Close on outside click
-  modal.addEventListener('click', (e) => {
+  modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       closeAllTestimonials();
     }
   });
-  
+
   // Close on ESC key
-  document.addEventListener('keydown', handleModalEscape);
+  document.addEventListener("keydown", handleModalEscape);
 }
 
 function closeAllTestimonials() {
-  const modal = document.getElementById('allTestimonialsModal');
+  const modal = document.getElementById("allTestimonialsModal");
   if (modal) {
     modal.remove();
-    document.body.style.overflow = 'auto';
-    document.removeEventListener('keydown', handleModalEscape);
+    document.body.style.overflow = "auto";
+    document.removeEventListener("keydown", handleModalEscape);
   }
 }
 
 function handleModalEscape(e) {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     closeAllTestimonials();
   }
 }
 
 function createCompactTestimonialCard(testimonial) {
   return `
-    <div class="testimonial-card-compact" data-rating="${testimonial.rating || 5}">
+    <div class="testimonial-card-compact" data-rating="${
+      testimonial.rating || 5
+    }">
       <div class="testimonial-header">
-        <img src="${testimonial.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(testimonial.name)}" 
+        <img src="${
+          testimonial.image ||
+          "https://ui-avatars.com/api/?name=" +
+            encodeURIComponent(testimonial.name)
+        }" 
              alt="${testimonial.name}"
-             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(testimonial.name)}&background=4ecdc4&color=fff'">
+             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(
+               testimonial.name
+             )}&background=4ecdc4&color=fff'">
         <div class="testimonial-info">
           <h4>${testimonial.name}</h4>
           <p>${testimonial.position} at ${testimonial.company}</p>
@@ -646,30 +730,31 @@ function createCompactTestimonialCard(testimonial) {
         </div>
       </div>
       <p class="testimonial-text">${testimonial.text}</p>
-      <span class="testimonial-date">${formatTestimonialDate(testimonial.date)}</span>
+      <span class="testimonial-date">${formatTestimonialDate(
+        testimonial.date
+      )}</span>
     </div>
   `;
 }
 
 function filterTestimonials(rating) {
-  const cards = document.querySelectorAll('.testimonial-card-compact');
-  const buttons = document.querySelectorAll('.filter-rating-btn');
-  
+  const cards = document.querySelectorAll(".testimonial-card-compact");
+  const buttons = document.querySelectorAll(".filter-rating-btn");
+
   // Update active button
-  buttons.forEach(btn => btn.classList.remove('active'));
-  event.target.closest('.filter-rating-btn').classList.add('active');
-  
+  buttons.forEach((btn) => btn.classList.remove("active"));
+  event.target.closest(".filter-rating-btn").classList.add("active");
+
   // Filter cards
-  cards.forEach(card => {
-    if (rating === 'all') {
-      card.style.display = 'block';
+  cards.forEach((card) => {
+    if (rating === "all") {
+      card.style.display = "block";
     } else {
-      const cardRating = parseInt(card.getAttribute('data-rating'));
-      card.style.display = cardRating === rating ? 'block' : 'none';
+      const cardRating = parseInt(card.getAttribute("data-rating"));
+      card.style.display = cardRating === rating ? "block" : "none";
     }
   });
 }
-
 
 // ==================== GLOBAL STATE ====================
 let currentCarouselImage = 0;
@@ -727,9 +812,9 @@ function initializePortfolio() {
 function showEntranceQuiz() {
   const quiz = document.getElementById("entranceQuiz");
   quiz.style.display = "flex";
-  
+
   setTimeout(() => {
-    const firstOption = quiz.querySelector('.quiz-option');
+    const firstOption = quiz.querySelector(".quiz-option");
     if (firstOption) firstOption.focus();
   }, 100);
 
@@ -738,7 +823,7 @@ function showEntranceQuiz() {
     option.addEventListener("click", () => {
       handleQuizSelection(option);
     });
-    
+
     option.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -746,18 +831,18 @@ function showEntranceQuiz() {
       }
     });
   });
-  
+
   document.addEventListener("keydown", handleQuizEscape);
 }
 
 function handleQuizSelection(option) {
   const role = option.getAttribute("data-role");
   userRole = role;
-  
+
   // Add selection animation
   option.style.transform = "scale(1.1)";
   option.style.borderColor = "var(--accent-primary)";
-  
+
   setTimeout(() => {
     localStorage.setItem("userRole", role);
     localStorage.setItem("hasSeenQuiz", "true");
@@ -1134,9 +1219,9 @@ function goToImage(index) {
 
 // ==================== VISITOR COUNTER ====================
 async function initVisitorCounter() {
-  const namespace = 'ahmedehab411-github-io';
-  const key = 'portfolio-visits';
-  
+  const namespace = "ahmedehab411-github-io";
+  const key = "portfolio-visits";
+
   try {
     // First, update live visitors immediately
     const estimatedLive = Math.floor(Math.random() * 5) + 1;
@@ -1145,22 +1230,16 @@ async function initVisitorCounter() {
       liveElement.textContent = estimatedLive;
     }
 
-    // Then try to get total count from API
-    const response = await fetch(
-      `https://api.countapi.xyz/hit/${namespace}/${key}`,
-      { method: 'GET' }
-    );
-
     if (response.ok) {
       const data = await response.json();
       console.log("✅ Visitor count:", data.value);
-      
+
       // Update live visitors with better estimate
       const betterLive = Math.max(1, Math.floor(Math.random() * 5) + 1);
       if (liveElement) {
         liveElement.textContent = betterLive;
       }
-      
+
       // Update live count every 30 seconds
       setInterval(() => {
         const newLive = Math.max(1, Math.floor(Math.random() * 5) + 1);
@@ -1169,23 +1248,24 @@ async function initVisitorCounter() {
           el.textContent = newLive;
         }
       }, 30000);
-      
     } else {
       throw new Error("CountAPI not available");
     }
   } catch (error) {
     console.warn("Using fallback counter:", error);
-    
+
     // Fallback: show live visitors anyway
-    let localCount = parseInt(localStorage.getItem("portfolio_visit_count") || "0");
+    let localCount = parseInt(
+      localStorage.getItem("portfolio_visit_count") || "0"
+    );
     localCount++;
     localStorage.setItem("portfolio_visit_count", localCount);
-    
+
     const liveElement = document.getElementById("liveVisitors");
     if (liveElement) {
       liveElement.textContent = Math.floor(Math.random() * 3) + 1;
     }
-    
+
     // Update periodically
     setInterval(() => {
       const el = document.getElementById("liveVisitors");
@@ -1438,7 +1518,7 @@ function getProjectStatusBadge(status) {
     "github-available":
       '<span class="status-badge available">📁 Code Available</span>',
     "completed-unavailable":
-      '<span class="status-badge unavailable">📂 Completed (Unavailable)</span>'
+      '<span class="status-badge unavailable">📂 Completed (Unavailable)</span>',
   };
   return badges[status] || "";
 }
@@ -1535,8 +1615,7 @@ function filterByStatus(status) {
   const filtered = projectsData.filter(
     (project) =>
       project.status === status ||
-      (status === "available" &&
-        project.github !== "#" )
+      (status === "available" && project.github !== "#")
   );
   displayProjects(filtered, "all");
 }
@@ -1546,32 +1625,34 @@ function createProjectCard(project, index) {
   card.className = "project-card";
   card.setAttribute("data-aos", "fade-up");
   card.setAttribute("data-aos-delay", (index % 3) * 100);
-  
+
   const projectImage = getProjectImage(project);
-  const featuredBadge = project.featured ? 
-    '<span class="featured-badge"><i class="fas fa-star"></i> Featured</span>' : "";
-  
+  const featuredBadge = project.featured
+    ? '<span class="featured-badge"><i class="fas fa-star"></i> Featured</span>'
+    : "";
+
   const statusBadge = getProjectStatusBadge(project.status);
-  
-  const isCompletedUnavailable = project.status === 'completed-unavailable';
-  const isGithubSoon = project.status === 'github-soon';
-  const hasGithub = project.github && project.github !== "#" && project.github !== "";
-  
+
+  const isCompletedUnavailable = project.status === "completed-unavailable";
+  const isGithubSoon = project.status === "github-soon";
+  const hasGithub =
+    project.github && project.github !== "#" && project.github !== "";
+
   const shouldDisableGithub = isCompletedUnavailable || isGithubSoon;
-  
+
   const githubButton = shouldDisableGithub
-    ? '' 
-    : hasGithub 
-      ? `<a href="${project.github}" class="project-link" target="_blank" title="View on GitHub">
+    ? ""
+    : hasGithub
+    ? `<a href="${project.github}" class="project-link" target="_blank" title="View on GitHub">
            <i class="fab fa-github"></i>
          </a>`
-      : `<button class="project-link disabled" 
+    : `<button class="project-link disabled" 
            onclick="handleMissingProject('${project.status}')" 
            title="${getDisabledTitle(project.status)}"
            disabled>
            <i class="fab fa-github"></i>
          </button>`;
-  
+
   card.innerHTML = `
     <div class="project-image">
       <img src="${projectImage}" 
@@ -1587,19 +1668,34 @@ function createProjectCard(project, index) {
       <h3>${project.title}</h3>
       <p>${project.description}</p> 
   `;
-  
+
   return card;
 }
 
 function handleMissingProject(status, type) {
-  if (status === 'completed-unavailable') {
-    showProjectToast("This project was completed but is currently unavailable. 📂", 'unavailable');
-  } else if (status.includes('completed-lost') || status.includes('completed-missing')) {
-    showProjectToast("This project was completed but the original files are no longer available. 📂", 'lost');
-  } else if (status.includes('completed-legacy')) {
-    showProjectToast("This is a legacy project completed in the past. Original files are unavailable. 🏛️", 'legacy');
+  if (status === "completed-unavailable") {
+    showProjectToast(
+      "This project was completed but is currently unavailable. 📂",
+      "unavailable"
+    );
+  } else if (
+    status.includes("completed-lost") ||
+    status.includes("completed-missing")
+  ) {
+    showProjectToast(
+      "This project was completed but the original files are no longer available. 📂",
+      "lost"
+    );
+  } else if (status.includes("completed-legacy")) {
+    showProjectToast(
+      "This is a legacy project completed in the past. Original files are unavailable. 🏛️",
+      "legacy"
+    );
   } else {
-    showProjectToast(`${type === 'github' ? 'GitHub repository' : 'Demo'} coming soon! 🚧`, 'info');
+    showProjectToast(
+      `${type === "github" ? "GitHub repository" : "Demo"} coming soon! 🚧`,
+      "info"
+    );
   }
 }
 
@@ -1658,9 +1754,9 @@ function navigateProjects(direction) {
   const projectsGrid = document.getElementById("projectsGrid");
   if (projectsGrid) {
     const offsetTop = projectsGrid.offsetTop - 100; // 100px offset for navbar
-    window.scrollTo({ 
-      top: offsetTop, 
-      behavior: "smooth" 
+    window.scrollTo({
+      top: offsetTop,
+      behavior: "smooth",
     });
   }
 }
@@ -1682,10 +1778,12 @@ function renderSkills(skillTree) {
 
   const categoryMeta = {
     programming_languages: { icon: "💻", title: "Programming Languages" },
-    robotics_frameworks: { icon: "🤖", title: "Robotics & Control" },
+    os_and_tools: { icon: "🖥️", title: "OS & Dev-Tools" },
+    software_development: { icon: "⚙️", title: "Software Development" },
+    robotics: { icon: "🤖", title: "Robotics & Control" },
+    data_science_ml: { icon: "🧠", title: "Data-Science & ML" },
     embedded_systems: { icon: "⚡", title: "Embedded Systems" },
-    ai_ml: { icon: "🧠", title: "AI & Machine Learning" },
-    tools_others: { icon: "🛠️", title: "Tools & Others" },
+    other_skills: { icon: "🔧", title: "Other Skills" },
   };
 
   let html = `
@@ -1784,27 +1882,49 @@ function getChatbotResponse(message) {
   }
 
   // Specific project inquiries
-  if (lowerMessage.includes("warehouse robot") || lowerMessage.includes("graduation project")) {
+  if (
+    lowerMessage.includes("warehouse robot") ||
+    lowerMessage.includes("graduation project")
+  ) {
     return "Ahmed's graduation project is an Autonomous Mobile Warehouse Robot! 🤖\n\nKey features:\n• Autonomous navigation using ROS Noetic\n• Real-time motion control with STM32 microcontroller\n• PD control algorithms for precise movement\n• LiDAR sensor integration for obstacle detection\n• Custom path planning algorithms\n\nThis project demonstrates his expertise in integrating robotics software (ROS) with embedded hardware (STM32) for real-world applications. Check the Projects section for more details!";
   }
 
   // Hiring/rates
-  if (lowerMessage.includes("rate") || lowerMessage.includes("cost") || lowerMessage.includes("price") || lowerMessage.includes("fee")) {
+  if (
+    lowerMessage.includes("rate") ||
+    lowerMessage.includes("cost") ||
+    lowerMessage.includes("price") ||
+    lowerMessage.includes("fee")
+  ) {
     return "For project rates and availability, Ahmed prefers to discuss requirements directly to provide accurate quotes. Rates vary based on:\n\n• Project complexity and duration\n• Required technologies (ROS, Embedded, AI/ML)\n• Timeline and deliverables\n• Ongoing support needs\n\nPlease contact him at ahmedehab1232@gmail.com or use the contact form to discuss your specific needs!";
   }
 
   // Timeline/availability
-  if (lowerMessage.includes("how long") || lowerMessage.includes("timeline") || lowerMessage.includes("when can you")) {
+  if (
+    lowerMessage.includes("how long") ||
+    lowerMessage.includes("timeline") ||
+    lowerMessage.includes("when can you")
+  ) {
     return "Project timelines depend on scope and complexity. Typical timeframes:\n\n• Small embedded projects: 1-2 weeks\n• ROS integration tasks: 2-4 weeks\n• Full robot development: 1-3 months\n• AI/ML model deployment: 2-6 weeks\n\nAhmed can usually start new projects within 1-2 weeks. For urgent requirements, he may be able to accommodate faster start dates. Contact him to discuss your specific timeline!";
   }
 
   // Training/teaching
-  if (lowerMessage.includes("training") || lowerMessage.includes("teach") || lowerMessage.includes("course") || lowerMessage.includes("workshop")) {
+  if (
+    lowerMessage.includes("training") ||
+    lowerMessage.includes("teach") ||
+    lowerMessage.includes("course") ||
+    lowerMessage.includes("workshop")
+  ) {
     return "Yes! Ahmed offers technical training and workshops 👨‍🏫\n\nHe has trained 3000+ students in:\n\n• Advanced Robotics & ROS\n• Modern C++ Programming\n• STM32 Embedded Systems\n• Motion Control Algorithms\n• AI/ML Fundamentals\n\nHe can provide:\n✅ Corporate training programs\n✅ University workshops\n✅ One-on-one mentoring\n✅ Online/offline sessions\n\nInterested? Email ahmedehab1232@gmail.com to discuss a training program!";
   }
 
   // Specific tech questions
-  if (lowerMessage.includes("can you") && (lowerMessage.includes("help") || lowerMessage.includes("build") || lowerMessage.includes("develop"))) {
+  if (
+    lowerMessage.includes("can you") &&
+    (lowerMessage.includes("help") ||
+      lowerMessage.includes("build") ||
+      lowerMessage.includes("develop"))
+  ) {
     return "Yes, Ahmed can help with:\n\n🤖 **Robotics**:\n• Autonomous navigation systems\n• ROS/ROS2 development\n• Robot integration & testing\n\n⚡ **Embedded**:\n• STM32/ARM firmware\n• Motion control systems\n• CAN/LIN protocol implementation\n\n🧠 **AI/ML**:\n• Computer vision applications\n• ML model deployment\n• Neural network training\n\n🛠️ **Plus**:\n• Technical consulting\n• Code review & optimization\n• System architecture design\n\nWhat's your project about? Feel free to reach out!";
   }
 
@@ -1912,28 +2032,44 @@ function getChatbotResponse(message) {
   }
 
   // Testimonials
-  if (lowerMessage.includes("testimonial") || lowerMessage.includes("review") || lowerMessage.includes("feedback")) {
-    return "⭐ **Client Testimonials**:\n\nAhmed has received excellent feedback from:\n\n• **40+ Happy Clients**\n• **4.9/5 Average Rating**\n\nFeatured testimonials from:\n• Technical directors\n• Project managers\n• Fellow engineers\n• Students & mentees\n\nCommon themes:\n✅ Deep technical knowledge\n✅ Clear communication\n✅ Problem-solving ability\n✅ Deadline commitment\n✅ Quality deliverables\n\nCheck the Testimonials section to read them!\n\nWorked with Ahmed? Add your feedback using the \"Add Your Feedback\" button!";
+  if (
+    lowerMessage.includes("testimonial") ||
+    lowerMessage.includes("review") ||
+    lowerMessage.includes("feedback")
+  ) {
+    return '⭐ **Client Testimonials**:\n\nAhmed has received excellent feedback from:\n\n• **40+ Happy Clients**\n• **4.9/5 Average Rating**\n\nFeatured testimonials from:\n• Technical directors\n• Project managers\n• Fellow engineers\n• Students & mentees\n\nCommon themes:\n✅ Deep technical knowledge\n✅ Clear communication\n✅ Problem-solving ability\n✅ Deadline commitment\n✅ Quality deliverables\n\nCheck the Testimonials section to read them!\n\nWorked with Ahmed? Add your feedback using the "Add Your Feedback" button!';
   }
 
   // Specific tech combinations
-  if ((lowerMessage.includes("ros") && lowerMessage.includes("stm32")) || 
-      (lowerMessage.includes("robot") && lowerMessage.includes("embedded"))) {
+  if (
+    (lowerMessage.includes("ros") && lowerMessage.includes("stm32")) ||
+    (lowerMessage.includes("robot") && lowerMessage.includes("embedded"))
+  ) {
     return "🔧 **ROS + Embedded Integration**:\n\nAhmed specializes in bridging high-level robotics (ROS) with low-level hardware (STM32)!\n\n**Integration Approach**:\n\n1️⃣ **Communication Layer**:\n• Serial (UART) bridge\n• micro-ROS integration\n• Custom protocol design\n\n2️⃣ **Real-time Control**:\n• STM32 handles motor control\n• PD/PID loops at high frequency\n• Sensor data processing\n\n3️⃣ **ROS Side**:\n• High-level planning\n• Navigation stack\n• Sensor fusion\n\n**Real Example**: Autonomous Warehouse Robot\n• ROS Noetic for navigation\n• STM32 for motor control\n• CAN bus for multi-ECU\n• Real-time coordination\n\n**Benefits**:\n✅ Best of both worlds\n✅ Reliable real-time performance\n✅ Flexible high-level control\n\nThis is his specialty! 💪";
   }
 
   // Languages
-  if (lowerMessage.includes("language") && !lowerMessage.includes("programming")) {
+  if (
+    lowerMessage.includes("language") &&
+    !lowerMessage.includes("programming")
+  ) {
     return "🗣️ **Languages**:\n\n• **Arabic**: Native speaker\n• **English**: Fluent (Professional working proficiency)\n\nCan communicate effectively in both languages for:\n• Technical documentation\n• Client meetings\n• Training sessions\n• Code comments\n\nPreferred for technical work: English\nComfortable with: Both languages";
   }
 
   // Comparison with others
-  if (lowerMessage.includes("why") && (lowerMessage.includes("choose") || lowerMessage.includes("hire"))) {
+  if (
+    lowerMessage.includes("why") &&
+    (lowerMessage.includes("choose") || lowerMessage.includes("hire"))
+  ) {
     return "💡 **Why Choose Ahmed?**\n\n**Unique Combination**:\n✅ **Robotics** (ROS1/ROS2)\n✅ **Embedded** (STM32, ARM)\n✅ **AI/ML** (PyTorch, TensorFlow)\n✅ **Teaching** (3000+ students)\n\n**Not just coding**:\n• Understands full system architecture\n• Hardware + Software integration\n• Real-world deployment experience\n• Clear communication\n\n**Track Record**:\n• 50+ completed projects\n• 2+ years professional experience\n• IEEE leadership experience\n• Strong testimonials (4.9/5)\n\n**Work Style**:\n• Detail-oriented\n• Deadline-focused\n• Regular communication\n• Quality over speed\n\n**Value Add**:\n• Technical consulting included\n• Post-delivery support\n• Documentation\n• Knowledge transfer\n\nReady to start your project? Let's talk!";
   }
 
   // Tools and workflow
-  if (lowerMessage.includes("tools") || lowerMessage.includes("workflow") || lowerMessage.includes("work with")) {
+  if (
+    lowerMessage.includes("tools") ||
+    lowerMessage.includes("workflow") ||
+    lowerMessage.includes("work with")
+  ) {
     return "🛠️ **Tools & Workflow**:\n\n**Development Environment**:\n• Linux (Ubuntu 20.04/22.04)\n• VS Code, CLion, Qt Creator\n• STM32CubeIDE\n• Vim for quick edits\n\n**Version Control**:\n• Git (GitHub, GitLab)\n• Feature branch workflow\n• Semantic commit messages\n\n**Build Systems**:\n• CMake\n• Catkin/Colcon (ROS)\n• Make\n\n**Debugging**:\n• GDB\n• STM32 ST-Link\n• ROS debugging tools\n• Logic analyzers\n\n**Collaboration**:\n• GitHub Issues\n• Slack/Discord\n• Weekly progress reports\n• Video calls (Zoom/Meet)\n\n**Documentation**:\n• Markdown\n• Doxygen\n• LaTeX for reports\n• Draw.io for diagrams\n\n**Testing**:\n• Unit tests (Google Test)\n• Integration tests\n• Hardware-in-the-loop\n\nProfessional workflow for reliable results! ✨";
   }
 
@@ -1944,27 +2080,40 @@ function getChatbotResponse(message) {
     lowerMessage.includes("hey") ||
     lowerMessage === "yo"
   ) {
-    return "Hello! 👋 I'm Ahmed's AI assistant, powered by contextual understanding!\n\nI can help you with:\n\n💼 **Professional Info**:\n• Experience & current role\n• Skills & expertise\n• Education & certifications\n\n🚀 **Projects**:\n• Portfolio highlights\n• Technical details\n• GitHub repositories\n\n📬 **Contact**:\n• How to reach Ahmed\n• Availability\n• Response times\n\n💾 **Quick Actions**:\n• Download CV\n• View testimonials\n• Get contact info\n\n**Try asking**:\n• \"Tell me about the warehouse robot\"\n• \"What are Ahmed's ROS skills?\"\n• \"How can I hire Ahmed?\"\n• \"Download CV\"\n• \"Show me projects\"\n\nWhat would you like to know? 😊";
+    return 'Hello! 👋 I\'m Ahmed\'s AI assistant, powered by contextual understanding!\n\nI can help you with:\n\n💼 **Professional Info**:\n• Experience & current role\n• Skills & expertise\n• Education & certifications\n\n🚀 **Projects**:\n• Portfolio highlights\n• Technical details\n• GitHub repositories\n\n📬 **Contact**:\n• How to reach Ahmed\n• Availability\n• Response times\n\n💾 **Quick Actions**:\n• Download CV\n• View testimonials\n• Get contact info\n\n**Try asking**:\n• "Tell me about the warehouse robot"\n• "What are Ahmed\'s ROS skills?"\n• "How can I hire Ahmed?"\n• "Download CV"\n• "Show me projects"\n\nWhat would you like to know? 😊';
   }
 
   // Thanks
-  if (lowerMessage.includes("thank") || lowerMessage.includes("thanks") || lowerMessage.includes("appreciate")) {
+  if (
+    lowerMessage.includes("thank") ||
+    lowerMessage.includes("thanks") ||
+    lowerMessage.includes("appreciate")
+  ) {
     return "You're very welcome! 😊\n\nFeel free to ask if you have more questions about:\n• Ahmed's experience or skills\n• Specific projects\n• Hiring or collaboration\n• Technical capabilities\n\nI'm here to help!\n\nIf you'd like to get in touch directly:\n📧 ahmedehab1232@gmail.com\n💬 Use the contact form below\n\nHave a great day! 🌟";
   }
 
   // Goodbye
-  if (lowerMessage.includes("bye") || lowerMessage.includes("see you") || lowerMessage.includes("goodbye")) {
+  if (
+    lowerMessage.includes("bye") ||
+    lowerMessage.includes("see you") ||
+    lowerMessage.includes("goodbye")
+  ) {
     return "Thanks for visiting Ahmed's portfolio! 👋\n\nBefore you go:\n• Bookmark this page for later\n• Check out the Projects section\n• Download the CV if interested\n• Connect on LinkedIn\n\nFeel free to return anytime!\n\nInterested in working together? Don't hesitate to reach out at ahmedehab1232@gmail.com\n\nGoodbye! 😊🚀";
   }
 
   // Help command
-  if (lowerMessage === "help" || lowerMessage === "?" || lowerMessage.includes("what can you")) {
-    return "🤖 **AI Assistant Help**:\n\nI can answer questions about:\n\n**👨‍💼 Professional**:\n• Experience & positions\n• Skills & technologies\n• Education & certifications\n• Availability & rates\n\n**🚀 Technical**:\n• ROS/ROS2 expertise\n• Embedded systems (STM32)\n• AI/ML capabilities\n• Programming languages\n\n**📂 Portfolio**:\n• Project details\n• GitHub repositories\n• Work samples\n• Testimonials\n\n**📞 Contact**:\n• Email & phone\n• Social profiles\n• Response times\n• How to hire\n\n**💡 Examples**:\n• \"Tell me about ROS experience\"\n• \"What embedded projects?\"\n• \"How to contact?\"\n• \"Download CV\"\n• \"Rates for freelance?\"\n\n**Quick Commands**:\n• Type 'download' for CV\n• Type 'contact' for info\n• Type 'projects' for portfolio\n\nJust ask naturally - I understand context! 🎯";
+  if (
+    lowerMessage === "help" ||
+    lowerMessage === "?" ||
+    lowerMessage.includes("what can you")
+  ) {
+    return '🤖 **AI Assistant Help**:\n\nI can answer questions about:\n\n**👨‍💼 Professional**:\n• Experience & positions\n• Skills & technologies\n• Education & certifications\n• Availability & rates\n\n**🚀 Technical**:\n• ROS/ROS2 expertise\n• Embedded systems (STM32)\n• AI/ML capabilities\n• Programming languages\n\n**📂 Portfolio**:\n• Project details\n• GitHub repositories\n• Work samples\n• Testimonials\n\n**📞 Contact**:\n• Email & phone\n• Social profiles\n• Response times\n• How to hire\n\n**💡 Examples**:\n• "Tell me about ROS experience"\n• "What embedded projects?"\n• "How to contact?"\n• "Download CV"\n• "Rates for freelance?"\n\n**Quick Commands**:\n• Type \'download\' for CV\n• Type \'contact\' for info\n• Type \'projects\' for portfolio\n\nJust ask naturally - I understand context! 🎯';
   }
 
   // Default - smarter
-  return "🤔 I'm not sure about that specific question, but I can help with:\n\n**Popular Topics**:\n• 💼 \"Tell me about experience\"\n• 🤖 \"What ROS skills?\"\n• ⚡ \"STM32 expertise?\"\n• 🧠 \"AI/ML capabilities?\"\n• 📂 \"Show me projects\"\n• 📧 \"How to contact?\"\n• 📄 \"Download CV\"\n• ⭐ \"View testimonials\"\n\n**Quick Info**:\n• **Role**: R&D Product Engineer @ FEDIS\n• **Expertise**: Robotics, Embedded, AI/ML\n• **Experience**: 3+ years\n• **Location**: Cairo, Egypt\n• **Status**: Available for projects ✅\n\n**Type 'help'** for full command list!\n\nOr just ask me anything about Ahmed's work - I understand natural language! 😊";
-}function navigateProjects(direction) {
+  return '🤔 I\'m not sure about that specific question, but I can help with:\n\n**Popular Topics**:\n• 💼 "Tell me about experience"\n• 🤖 "What ROS skills?"\n• ⚡ "STM32 expertise?"\n• 🧠 "AI/ML capabilities?"\n• 📂 "Show me projects"\n• 📧 "How to contact?"\n• 📄 "Download CV"\n• ⭐ "View testimonials"\n\n**Quick Info**:\n• **Role**: R&D Product Engineer @ FEDIS\n• **Expertise**: Robotics, Embedded, AI/ML\n• **Experience**: 3+ years\n• **Location**: Cairo, Egypt\n• **Status**: Available for projects ✅\n\n**Type \'help\'** for full command list!\n\nOr just ask me anything about Ahmed\'s work - I understand natural language! 😊';
+}
+function navigateProjects(direction) {
   const totalPages = Math.ceil(allProjects.length / PROJECTS_PER_PAGE);
 
   if (direction === "prev" && currentProjectPage > 0) {
@@ -1980,9 +2129,9 @@ function getChatbotResponse(message) {
   const projectsGrid = document.getElementById("projectsGrid");
   if (projectsGrid) {
     const offsetTop = projectsGrid.offsetTop - 100; // 100px offset for navbar
-    window.scrollTo({ 
-      top: offsetTop, 
-      behavior: "smooth" 
+    window.scrollTo({
+      top: offsetTop,
+      behavior: "smooth",
     });
   }
 }
