@@ -1,0 +1,23 @@
+{
+"currentPosition": "R&D Product Engineer",
+"currentCompany": "FEDIS",
+"companyUrl": "https://fedis.com.eg",
+"tagline": "R&D | Robotics | Embedded | AI/ML",
+"typingPhrases": [
+"Building Autonomous Robots",
+"Developing Embedded Systems",
+"Training AI Models",
+"Implementing Motion Control",
+"ROS1 & ROS2 Expert",
+"STM32 Firmware Developer"
+],
+"aboutDesc1": "I'm an R&D Product Engineer with extensive experience in developing autonomous robotic systems using ROS1 (Noetic) and ROS2 (Humble/Jazzy), C/C++, and Python. My work focuses on firmware development on STM32, implementation of motion control algorithms (PD/PID), and integration of embedded systems with navigation and perception modules.",
+"aboutDesc2": "With a background in AI model deployment for computer vision tasks and machine learning in robotics, I specialize in real-time control, robotic navigation, sensor integration, and system-level automation.",
+"location": "Cairo, Egypt",
+"email": "ahmedehab1232@gmail.com",
+"availableForWork": true,
+"roboticsProjects": 50,
+"trainingSessions": 120,
+"studentsTrained": 3000,
+"yearsExperience": 2
+}

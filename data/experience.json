@@ -1,0 +1,62 @@
+[
+  {
+    "order": 1,
+    "position": "R&D Product Engineer",
+    "company": "FEDIS (Fixed Egypt for Digital Solutions)",
+    "location": "Cairo, Egypt",
+    "startDate": "2025-06",
+    "endDate": "",
+    "current": true,
+    "achievements": [
+      "Drive end-to-end product development, integrating embedded systems, hardware, and software interfaces to deliver innovative digital solutions with enhanced performance.",
+      "Develop and test prototypes, creating schematics and BOMs while implementing rigorous validation protocols to ensure product reliability and manufacturability.",
+      "Optimize product functionality through iterative testing and debugging, improving system efficiency and reducing development cycles."
+    ],
+    "technologies": ["Embedded Systems", "Hardware Design", "Product Development", "Prototyping"]
+  },
+  {
+    "order": 2,
+    "position": "Part-time Technical Instructor",
+    "company": "Sector B5 - ITIDA",
+    "location": "Smart Village, Egypt",
+    "startDate": "2023-07",
+    "endDate": "",
+    "current": true,
+    "achievements": [
+      "Conduct 80+ instructional sessions on different fields like Advanced Robotics, Modern C++, and embedded systems to participants with diverse backgrounds.",
+      "Lead 40+ practical projects, guiding participants to apply theoretical knowledge in robotics and embedded systems.",
+      "Provide hands-on training in ROS1/ROS2, STM32 firmware development, and motion control algorithms."
+    ],
+    "technologies": ["Robotics", "ROS", "C++", "STM32", "Education"]
+  },
+  {
+    "order": 3,
+    "position": "R&D Process Engineer",
+    "company": "Bedo Innovating Education",
+    "location": "6th of October, Egypt",
+    "startDate": "2023-12",
+    "endDate": "2024-01",
+    "current": false,
+    "achievements": [
+      "Led research and development efforts to optimize engineering processes, focusing on innovative educational technologies and solutions.",
+      "Collaborated with cross-functional teams to design, prototype, and test new educational tools and systems.",
+      "Analyzed and improved workflows for educational product development, streamlining processes to increase workflow by 25%."
+    ],
+    "technologies": ["R&D", "Process Optimization", "Educational Technology", "Prototyping"]
+  },
+  {
+    "order": 4,
+    "position": "Digital Fabrication Specialist",
+    "company": "Sector B5 - ITIDA",
+    "location": "Smart Village, Egypt",
+    "startDate": "2022-07",
+    "endDate": "2022-09",
+    "current": false,
+    "achievements": [
+      "Provided technical mentoring on different engineering projects and delivered instructional sessions on digital fabrication techniques.",
+      "Maintained and operated various digital fabrication machines including 3D printers, laser cutting machines, and PCB milling machines.",
+      "Supported students and engineers in prototyping and product development using digital fabrication tools."
+    ],
+    "technologies": ["3D Printing", "Laser Cutting", "PCB Design", "Digital Fabrication", "CAD"]
+  }
+]

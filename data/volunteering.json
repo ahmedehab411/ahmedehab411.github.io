@@ -1,0 +1,65 @@
+[
+  {
+    "order": 1,
+    "position": "Executive Chairperson",
+    "company": "IEEE Helwan Student Branch",
+    "location": "Helwan University",
+    "startDate": "2022-09",
+    "endDate": "2023-09",
+    "achievements": [
+      "Led 6 officers & 15 directors, organised 4 events for ~3000 students",
+      "Ran 4 competitions for 38 teams (~400 participants)",
+      "Secured 3 global IEEE prizes"
+    ],
+    "technologies": ["Leadership", "Event Management", "Team Coordination"]
+  },
+  {
+    "order": 2,
+    "position": "RAS Chapter Director",
+    "company": "IEEE Helwan Student Branch",
+    "location": "Helwan University",
+    "startDate": "2021-09",
+    "endDate": "2022-09",
+    "achievements": [
+      "Managed 15 project selections and coordinated events",
+      "Trained volunteers, focusing on leadership and planning"
+    ],
+    "technologies": ["Robotics", "Project Management", "Mentoring"]
+  },
+  {
+    "order": 3,
+    "position": "RAS Project Team Control Leader",
+    "company": "IEEE Helwan Student Branch",
+    "location": "Helwan University",
+    "startDate": "2020-09",
+    "endDate": "2021-09",
+    "achievements": [
+      "Oversaw project execution and team coordination for robotics initiatives"
+    ],
+    "technologies": ["ROS", "Embedded Systems", "Team Lead"]
+  },
+  {
+    "order": 4,
+    "position": "ROV Control Member",
+    "company": "Robotics Student Organization",
+    "location": "Helwan University",
+    "startDate": "2019-09",
+    "endDate": "2020-09",
+    "achievements": [
+      "Contributed to ROV control system design and testing"
+    ],
+    "technologies": ["Control Systems", "Underwater Robotics"]
+  },
+  {
+    "order": 5,
+    "position": "R&D Member",
+    "company": "Robotics Student Organization",
+    "location": "Helwan University",
+    "startDate": "2018-09",
+    "endDate": "2019-09",
+    "achievements": [
+      "Supported research and development efforts in robotics projects"
+    ],
+    "technologies": ["Research", "Prototyping"]
+  }
+]

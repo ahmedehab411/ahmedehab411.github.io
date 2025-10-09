@@ -1,0 +1,74 @@
+{
+  "skills": {
+    "programming_languages": [
+      "C",
+      "Modern C++",
+      "Python",
+      "Rust (Intermediate)"
+    ],
+    "os_and_tools": ["Linux", "GitHub", "Git"],
+    "software_development": [
+      "Data Structures & Algorithms",
+      "Concurrency",
+      "SQL",
+      "OOP",
+      "Design Patterns",
+      "SOLID Principles",
+      "Agile & Scrum"
+    ],
+    "robotics": [
+      "Motion Control",
+      "ROS1",
+      "ROS2",
+      "Robot Navigation",
+      "PID",
+      "PLC Programming",
+      "Robotics Control"
+    ],
+    "data_science_ml": [
+      "NumPy",
+      "Pandas",
+      "XGBoost",
+      "Scikit-learn",
+      "Matplotlib",
+      "Reinforcement Learning",
+      "Recommenders Systems",
+      "Deep Learning",
+      "PyTorch",
+      "TensorFlow",
+      "CNN"
+    ],
+    "embedded_systems": [
+      "AVR",
+      "ARM",
+      "Raspberry Pi",
+      "STM32",
+      "Embedded C",
+      "SPI",
+      "Bootloaders",
+      "Embedded IoT",
+      "State Machine",
+      "MISRA C",
+      "CAN/CAN-FD/LIN",
+      "UART",
+      "I2C",
+      "RTOS"
+    ],
+    "other_skills": [
+      "RPA",
+      "Digital Fabrication",
+      "Proteus",
+      "PCB Design",
+      "Laser Cutting",
+      "Circuit Analysis",
+      "3D Printing",
+      "CNC Milling",
+      "Eagle",
+      "MATLAB",
+      "LABVIEW",
+      "Qt Creator",
+      "Qt",
+      "Debugging & Testing"
+    ]
+  }
+}
